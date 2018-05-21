@@ -32,6 +32,12 @@ public class PlayerController : MonoBehaviour {
     private bool canDash = false;
     #endregion
 
+    #region Death parameters
+    private bool isDead = false;
+
+    public bool IsDead { get { return isDead; } }
+    #endregion
+
     #region Components Variables
     private Rigidbody2D rigidBody;
     #endregion
@@ -58,6 +64,14 @@ public class PlayerController : MonoBehaviour {
         Freeze();
     }
 
+    private void OnCollisionEnter2D(Collision2D collision)
+    {
+        if(collision.gameObject.layer==LayerMask.NameToLayer("Deadly"))
+        {
+            Die();
+        }
+
+    }
 
 
 
@@ -162,5 +176,11 @@ public class PlayerController : MonoBehaviour {
     {
         freezeTime = maxFreezeDuration;
         canDash = true;
+    }
+
+    // Sets is dead property to true so other objects can know when player dies
+    private void Die()
+    {
+        isDead = true;
     }
 }
