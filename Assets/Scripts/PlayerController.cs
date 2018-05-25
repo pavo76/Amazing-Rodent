@@ -54,15 +54,41 @@ public class PlayerController : MonoBehaviour {
 	void Update ()
     {
         CheckCollisions();
+
         if(isGrounded)
         {
             ResetAirLimiters();
         }
-        MoveHorizontally();
-        Dash();
-        Jump();
-        Freeze();
+
+        if (Input.GetAxis("Horizontal") != 0)
+        {
+            MoveHorizontally();
+        }
+
+        if (Input.GetButtonDown("Dash") && canDash)
+        {
+            Dash();
+        }
+
+        if (Input.GetButton("Jump"))
+        {
+            Jump();
+        }
+        else if(!isGrounded && !Input.GetButton("Jump"))
+        {
+            ApplyFallingForce();
+        }
+
+        if (Input.GetButton("Freeze") && freezeTime > 0)
+        {
+            Freeze();
+        }
+        else
+        {
+            ResetConstraints();
+        }
     }
+
 
     private void OnCollisionEnter2D(Collision2D collision)
     {
@@ -132,43 +158,33 @@ public class PlayerController : MonoBehaviour {
         {
             rigidBody.AddForce(Vector2.down * slowFallingForce);
         }
+      
+    }
 
-        // If player is in the air but isn't holding jump button
-        // Fall faster
-        else if (!isGrounded && !Input.GetButton("Jump"))
-        {
-            rigidBody.AddForce(Vector2.down * fallingForce);
-        }        
+    // Makes player fall faster if he is not holding space
+    private void ApplyFallingForce()
+    {
+        rigidBody.AddForce(Vector2.down * fallingForce);
     }
 
     // Makes player dash
     // TODO Put cooldown timer for ground dashes
     // TODO Make dash look sligthly slower
     private void Dash()
-    {
-        if(Input.GetButtonDown("Dash") && canDash)
-        {
-            int orientation = facingRight ? 1: -1;
-            rigidBody.velocity = Vector2.zero;
-            rigidBody.velocity=new Vector2(orientation * dashSpeed, 0);
-            canDash = false;
-        }
+    {        
+        int orientation = facingRight ? 1: -1;
+        rigidBody.velocity = Vector2.zero;
+        rigidBody.velocity=new Vector2(orientation * dashSpeed, 0);
+        canDash = false;
     }
 
     // Makes player freeze in space for a period of time
     // TODO put cooldown timer for ground freeze
     private void Freeze()
     {
-        if(Input.GetButton("Freeze") && freezeTime>0)
-        {
             rigidBody.velocity = Vector2.zero;
             rigidBody.constraints = RigidbodyConstraints2D.FreezeAll;
-            freezeTime -= Time.deltaTime;
-        }
-        else
-        {
-            rigidBody.constraints = RigidbodyConstraints2D.FreezeRotation;
-        }
+            freezeTime -= Time.deltaTime;        
     }
 
     // Resets parameters that limit usage of movement skills in air
@@ -176,6 +192,12 @@ public class PlayerController : MonoBehaviour {
     {
         freezeTime = maxFreezeDuration;
         canDash = true;
+    }
+
+    // Resets Rigidbody constraints to have only rotation frozen
+    private void ResetConstraints()
+    {
+        rigidBody.constraints = RigidbodyConstraints2D.FreezeRotation;
     }
 
     // Sets is dead property to true so other objects can know when player dies
